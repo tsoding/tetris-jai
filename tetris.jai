@@ -43,11 +43,28 @@ immediate_cell_quad :: (col: s64, row: s64, color: Vector4) {
     Simp.immediate_quad(x, y, x + w, y + h, color);
 }
 
-immediate_shape :: (ocol: s64, orow: s64) {
-    immediate_cell_quad(ocol + 0, orow + 0, shape_color);
-    immediate_cell_quad(ocol + 1, orow + 0, shape_color);
-    immediate_cell_quad(ocol + 2, orow + 0, shape_color);
-    immediate_cell_quad(ocol + 2, orow + 1, shape_color);
+Shape :: struct {
+    cells: [4][4]int;
+    rows: int;
+    cols: int;
+};
+
+LShape :: Shape.{
+    cells = .[
+        .[1, 0, 0, 0],
+        .[1, 0, 0, 0],
+        .[1, 1, 0, 0],
+        .[0, 0, 0, 0],
+    ],
+    rows = 3,
+    cols = 2,
+};
+
+immediate_shape :: (using shape: *Shape, ocol: s64, orow: s64) {
+    for row: 0..rows-1
+        for col: 0..cols-1
+            if cells[row][col]
+                immediate_cell_quad(ocol + col, orow + row, shape_color);
 }
 
 main :: () {
@@ -60,7 +77,7 @@ main :: () {
     Simp.set_render_target(window);
 
     col := 0;
-    row := grid_rows;
+    row := grid_rows - LShape.rows;
     step_timeout := step_interval;
 
     while !should_quit_game {
@@ -109,7 +126,7 @@ main :: () {
             }
         }
 
-        immediate_shape(col, row);
+        immediate_shape(*LShape, col, row);
 
         Simp.swap_buffers(window);
     }
