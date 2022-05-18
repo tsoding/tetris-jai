@@ -8,10 +8,10 @@ window_width  :: 800;
 window_height :: 600;
 quad_size     :: 100.0;
 
-shape_color      :: Vector4.{x=.8, y=.4, z=.4, w=1};
-background_color :: Vector4.{x=.2, y=.3, z=.3, w=1};
-grid_color0      :: Vector4.{x=.3, y=.5, z=.3, w=1};
-grid_color1      :: Vector4.{x=.2, y=.5, z=.2, w=1};
+shape_color      :: Vector4.{x=.2, y=.8, z=.2, w=1};
+background_color :: Vector4.{x=.1, y=.1, z=.1, w=1};
+grid_color0      :: background_color;
+grid_color1      :: Vector4.{x=.2, y=.2, z=.2, w=1};
 grid_percent     :: 0.5;
 // NOTE: we are trying to keep the grid square (for some reason, I don't know why, I just feel like it)
 #if window_height < window_width {
