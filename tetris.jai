@@ -85,11 +85,12 @@ main :: () {
                     break;
                 }
 
-                case .KEYBOARD;
-                if event.key_code == {
-                    case .ESCAPE;      should_quit_game = true; break;
-                    case .ARROW_LEFT;  col -= 1;
-                    case .ARROW_RIGHT; col += 1;
+                case .KEYBOARD; if event.key_pressed {
+                    if event.key_code == {
+                        case .ESCAPE;      should_quit_game = true; break;
+                        case .ARROW_LEFT;  col -= 1;
+                        case .ARROW_RIGHT; col += 1;
+                    }
                 }
             }
         }
