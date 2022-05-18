@@ -1,5 +1,7 @@
 # Simple Tetris Game
 
+**WARNING! The Game is not playable yet! Don't expect anything from it!**
+
 ## Quick Start
 
 ```console
