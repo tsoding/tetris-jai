@@ -29,7 +29,7 @@ grid_cols        :: 10;
 grid_rows        :: 10;
 grid_cell_width  :: grid_width / grid_cols;
 grid_cell_height :: grid_height / grid_rows;
-step_interval    :: 0.5;
+step_interval    :: 1.5;
 DT_MAX : float : 0.15;
 
 immediate_cell_quad :: (col: s64, row: s64, color: Vector4) {
@@ -47,24 +47,141 @@ Shape :: struct {
     cells: [4][4]int;
     rows: int;
     cols: int;
-};
+}
 
-LShape :: Shape.{
-    cells = .[
-        .[1, 0, 0, 0],
-        .[1, 0, 0, 0],
-        .[1, 1, 0, 0],
-        .[0, 0, 0, 0],
-    ],
-    rows = 3,
-    cols = 2,
-};
+Shape_Kind :: enum {L; O; T; I; Z; COUNT;};
+
+Shape_By_Kind : [Shape_Kind.COUNT]Shape : .[
+    // L
+    .{
+        cells = .[
+                .[1, 1, 0, 0],
+                .[1, 0, 0, 0],
+                .[1, 0, 0, 0],
+                .[0, 0, 0, 0],
+        ],
+        rows = 3,
+        cols = 2,
+    },
+    // O
+    .{
+        cells = .[
+            .[1, 1, 0, 0],
+            .[1, 1, 0, 0],
+            .[0, 0, 0, 0],
+            .[0, 0, 0, 0],
+        ],
+        rows = 2,
+        cols = 2,
+    },
+    // T
+    .{
+        cells = .[
+            .[1, 1, 1, 0],
+            .[0, 1, 0, 0],
+            .[0, 0, 0, 0],
+            .[0, 0, 0, 0],
+        ],
+        rows = 2,
+        cols = 3,
+    },
+    // I
+   .{
+       cells = .[
+           .[1, 0, 0, 0],
+           .[1, 0, 0, 0],
+           .[1, 0, 0, 0],
+           .[1, 0, 0, 0],
+       ],
+       rows = 4,
+       cols = 1,
+   },
+   // Z
+   .{
+       cells = .[
+           .[0, 1, 1, 0],
+           .[1, 1, 0, 0],
+           .[0, 0, 0, 0],
+           .[0, 0, 0, 0],
+       ],
+       rows = 2,
+       cols = 3,
+   }
+];
+
+// 1 0   
+// 2 0 => 0 0 4
+// 3 4    1 2 3
+//
+// 1: (0, 0) -> (1, 0)
+// 2: (1, 0) -> (1, 1)
+// 3: (2, 0) -> (1, 2)
+// 4: (2, 1) -> (0, 2)
+//   
+
+shape_rotate_left :: (using shape: Shape) -> Shape {
+    result : Shape = ---;
+    result.rows = cols;
+    result.cols = rows;
+    for row: 0..rows-1 {
+        for col: 0..cols-1 {
+            result.cells[cols - col - 1][row] = cells[row][col];
+        }
+    }
+    return result;
+}
+
+//          1 0 
+// 0 0 4 => 2 0 
+// 1 2 3    3 4 
+//
+// 1: (1, 0) -> (0, 0)
+// 2: (1, 1) -> (1, 0)
+// 3: (1, 2) -> (2, 0)
+// 4: (0, 2) -> (2, 1)
+//   
+
+shape_rotate_right :: (using shape: Shape) -> Shape {
+    result : Shape = ---;
+    result.rows = cols;
+    result.cols = rows;
+    for row: 0..rows-1 {
+        for col: 0..cols-1 {
+            result.cells[col][rows - row - 1] = cells[row][col];
+        }
+    }
+    return result;
+}
+
+shape_flip_horiz :: (using shape: Shape) -> Shape {
+    result : Shape = ---;
+    result.rows = rows;
+    result.cols = cols;
+    for row: 0..rows-1 {
+        for col: 0..cols-1 {
+            result.cells[row][cols - col - 1] = cells[row][col];
+        }
+    }
+    return result;
+}
 
 immediate_shape :: (using shape: *Shape, ocol: s64, orow: s64) {
     for row: 0..rows-1
         for col: 0..cols-1
-            if cells[row][col]
-                immediate_cell_quad(ocol + col, orow + row, shape_color);
+            if cells[row][col] {
+                ccol := shape.cols/2;
+                crow := shape.rows/2;
+                immediate_cell_quad(ocol + col - ccol, orow + row - crow, shape_color);
+            }
+}
+
+print_shape :: (using shape: Shape) {
+    for row: 0..rows-1 {
+        for col: 0..cols-1 {
+            print("%", ifx cells[row][col] "*"; else  " ");
+        }
+        print("\n");
+    }
 }
 
 main :: () {
@@ -76,8 +193,10 @@ main :: () {
 
     Simp.set_render_target(window);
 
+    shape := Shape_By_Kind[Shape_Kind.T];
+
     col := 0;
-    row := grid_rows - LShape.rows;
+    row := grid_rows - shape.rows;
     step_timeout := step_interval;
 
     while !should_quit_game {
@@ -107,6 +226,7 @@ main :: () {
                         case .ESCAPE;      should_quit_game = true; break;
                         case .ARROW_LEFT;  col -= 1;
                         case .ARROW_RIGHT; col += 1;
+                        case .ARROW_UP;    shape = shape_rotate_left(shape);
                     }
                 }
             }
@@ -126,7 +246,7 @@ main :: () {
             }
         }
 
-        immediate_shape(*LShape, col, row);
+        immediate_shape(*shape, col, row);
 
         Simp.swap_buffers(window);
     }
